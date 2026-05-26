@@ -9,6 +9,7 @@ import { SectionRoutes } from './section/section.route.js';
 import { ChapterRoutes } from './chapter/chapter.route.js';
 import { QuestionMasterRoutes } from './questionMaster/questionMaster.route.js';
 import { ResultRoutes } from './result/result.route.js';
+import { DashboardRoutes } from './dashboard/dashboard.route.js';
 
 const router = express.Router();
 
@@ -52,6 +53,10 @@ const moduleRoutes = [
     {
         path: '/results',
         route: ResultRoutes
+    },
+    {
+        path: '/dashboard',
+        route: DashboardRoutes
     }
 ];
 

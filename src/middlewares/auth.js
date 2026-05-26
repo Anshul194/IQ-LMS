@@ -6,11 +6,14 @@ import config from "../config/index.js";
 
 const auth = (...requiredRoles) => {
     return catchAsync(async (req, res, next) => {
-        const token = req.headers.authorization;
-
-        // 1. Check if token is provided
+        let token = req.headers.authorization;
         if (!token) {
-            throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized");
+            throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized! Token is missing.");
+        }
+
+        // Handle "Bearer <token>" format
+        if (token.startsWith('Bearer ')) {
+            token = token.split(' ')[1];
         }
 
         // 2. Verify token
@@ -18,7 +21,10 @@ const auth = (...requiredRoles) => {
         try {
             decoded = jwt.verify(token, config.jwt.secret);
         } catch (err) {
-            throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized access");
+            if (err.name === 'TokenExpiredError') {
+                throw new AppError(httpStatus.UNAUTHORIZED, "Token has expired. Please login again.");
+            }
+            throw new AppError(httpStatus.UNAUTHORIZED, "Invalid Token or Unauthorized access");
         }
 
         const { role, userId } = decoded;
