@@ -2,13 +2,34 @@ import { QuestionMasterRepository } from './questionMaster.repository.js';
 import AppError from '../../../utils/AppError.js';
 import httpStatus from 'http-status-codes';
 import QuestionMaster from '../../models/questionMaster.js';
+import ExamType from '../../models/examType.js';
 
 const createQuestion = async (payload) => {
     return await QuestionMasterRepository.createQuestion(payload);
 };
 
 const getAllQuestions = async (query) => {
-    return await QuestionMasterRepository.getAllQuestions(query);
+    const { grade, examType, section, chapter, ...remainingQuery } = query;
+    const filter = { ...remainingQuery, isDeleted: false };
+
+    if (grade) {
+        // Find exam type that matches the grade ( className in model )
+        const foundExamType = await ExamType.findOne({
+            className: { $regex: new RegExp(`^${grade}`, 'i') }
+        });
+        if (foundExamType) {
+            filter.examType = foundExamType._id;
+        } else {
+            // If grade requested but no exam type found, return empty set rather than all questions
+            return [];
+        }
+    }
+
+    if (examType) filter.examType = examType;
+    if (section) filter.section = section;
+    if (chapter) filter.chapter = chapter;
+
+    return await QuestionMasterRepository.getAllQuestions(filter);
 };
 
 const getQuestionById = async (id) => {

@@ -8,6 +8,7 @@ import { ExamTypeRoutes } from './examType/examType.route.js';
 import { SectionRoutes } from './section/section.route.js';
 import { ChapterRoutes } from './chapter/chapter.route.js';
 import { QuestionMasterRoutes } from './questionMaster/questionMaster.route.js';
+import { ResultRoutes } from './result/result.route.js';
 
 const router = express.Router();
 
@@ -47,6 +48,10 @@ const moduleRoutes = [
     {
         path: '/question-masters',
         route: QuestionMasterRoutes
+    },
+    {
+        path: '/results',
+        route: ResultRoutes
     }
 ];
 

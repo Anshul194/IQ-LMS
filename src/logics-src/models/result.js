@@ -8,14 +8,18 @@ const resultSchema = new mongoose.Schema({
     },
     examId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Exam",
+        ref: "ExamType",
         required: true
     },
     score: {
         type: Number,
         required: true
     },
-    totalMarks: {
+    totalQuestions: {
+        type: Number,
+        required: true
+    },
+    correctAnswersCount: {
         type: Number,
         required: true
     },
@@ -31,9 +35,9 @@ const resultSchema = new mongoose.Schema({
     answers: [{
         questionId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Question"
+            ref: "QuestionMaster"
         },
-        selectedOptionId: mongoose.Schema.Types.ObjectId,
+        selectedOption: String, // A, B, C, or D
         isCorrect: Boolean
     }],
     completedAt: {

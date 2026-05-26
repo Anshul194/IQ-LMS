@@ -29,10 +29,16 @@ const deleteStudent = async (id) => {
     return await Student.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
 };
 
+const findStudentByMobileAndDob = async (mobileNumber, dob) => {
+    return await Student.findOne({ mobileNumber, dob, isDeleted: false })
+        .populate('userId', 'fullName role status');
+};
+
 export const StudentRepository = {
     createStudent,
     getAllStudents,
     getStudentById,
     updateStudent,
-    deleteStudent
+    deleteStudent,
+    findStudentByMobileAndDob
 };
