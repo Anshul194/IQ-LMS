@@ -67,9 +67,45 @@ const getMyCertificates = async (userId) => {
         .sort({ createdAt: -1 });
 };
 
+const getAllResults = async (query = {}) => {
+    const { status, examId, studentName, studentId, page = 1, limit = 10 } = query;
+    const filter = {};
+
+    if (status) filter.status = status;
+    if (examId) filter.examId = examId;
+    if (studentId) filter.userId = studentId;
+
+    // For studentName search, we first find matching users then filter results
+    if (studentName) {
+        const users = await User.find({ fullName: { $regex: studentName, $options: 'i' } }).select('_id');
+        filter.userId = { $in: users.map(u => u._id) };
+    }
+
+    const skip = (page - 1) * limit;
+
+    const data = await Result.find(filter)
+        .populate('userId', 'fullName email contactNumber')
+        .populate('examId', 'examType className language')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit));
+
+    const total = await Result.countDocuments(filter);
+
+    return {
+        data,
+        meta: {
+            total,
+            page: Number(page),
+            limit: Number(limit)
+        }
+    };
+};
+
 export const ResultService = {
     submitResult,
     getMyResults,
     getResultById,
-    getMyCertificates
+    getMyCertificates,
+    getAllResults
 };

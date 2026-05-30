@@ -64,10 +64,21 @@ const getMyCertificates = catchAsync(async (req, res) => {
     });
 });
 
+const getAllResults = catchAsync(async (req, res) => {
+    const result = await ResultService.getAllResults(req.query);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'All results fetched successfully',
+        data: result
+    });
+});
+
 export const ResultController = {
     submitResult,
     getMyResults,
     getResultById,
     generateCertificate,
-    getMyCertificates
+    getMyCertificates,
+    getAllResults
 };

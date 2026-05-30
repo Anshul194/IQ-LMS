@@ -7,6 +7,7 @@ const router = express.Router();
 router.post('/submit', auth('student'), ResultController.submitResult);
 router.get('/my-results', auth('student'), ResultController.getMyResults);
 router.get('/my-certificates', auth('student'), ResultController.getMyCertificates);
+router.get('/', auth('admin'), ResultController.getAllResults);
 router.get('/:id', auth('student', 'admin'), ResultController.getResultById);
 router.get('/:id/certificate', auth('student', 'admin'), ResultController.generateCertificate);
 
