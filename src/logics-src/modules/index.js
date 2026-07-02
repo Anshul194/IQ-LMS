@@ -9,6 +9,7 @@ import { SectionRoutes } from './section/section.route.js';
 import { ChapterRoutes } from './chapter/chapter.route.js';
 import { QuestionMasterRoutes } from './questionMaster/questionMaster.route.js';
 import { ResultRoutes } from './result/result.route.js';
+import { AptitudeRoutes } from './aptitude/aptitude.route.js';
 import { DashboardRoutes } from './dashboard/dashboard.route.js';
 import { ExportRoutes } from './export/export.route.js';
 
@@ -54,6 +55,10 @@ const moduleRoutes = [
     {
         path: '/results',
         route: ResultRoutes
+    },
+    {
+        path: '/aptitude-results',
+        route: AptitudeRoutes
     },
     {
         path: '/dashboard',

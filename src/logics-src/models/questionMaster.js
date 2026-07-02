@@ -6,6 +6,11 @@ const optionSchema = new mongoose.Schema({
         fileName: String,
         fileUrl: String,
         publicId: String
+    },
+    traitMapping: {
+        type: String,
+        enum: ['CAREER_1', 'CAREER_2', 'BOTH', 'NONE'],
+        default: 'NONE'
     }
 }, { _id: false });
 

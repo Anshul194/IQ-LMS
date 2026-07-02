@@ -2,20 +2,32 @@ import catchAsync from '../../../utils/catchAsync.js';
 import sendResponse from '../../../utils/sendResponse.js';
 import httpStatus from 'http-status-codes';
 import { ResultService } from './result.service.js';
-
+import AppError from '../../../utils/AppError.js';
 import { generateCertificatePDF } from '../../../utils/certificateGenerator.js';
+import { generateReportPDF } from '../../../utils/reportGenerator.js';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SUBMIT RESULT
+// POST /results/submit
+// ─────────────────────────────────────────────────────────────────────────────
 const submitResult = catchAsync(async (req, res) => {
-    // Assuming userId is attached to req.user by auth middleware
-    const result = await ResultService.submitResult(req.user.userId, req.body);
+    const data = await ResultService.submitResult(req.user.userId, req.body);
+
+    // If retest required, return 200 with the retest message (not an error)
     sendResponse(res, {
         statusCode: httpStatus.CREATED,
         success: true,
-        message: 'Exam submitted successfully',
-        data: result
+        message: data.status === 'RETEST_REQUIRED'
+            ? 'Retest required. Student must score at least 11 correct answers.'
+            : 'Exam submitted successfully.',
+        data
     });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET MY RESULTS
+// GET /results/my-results
+// ─────────────────────────────────────────────────────────────────────────────
 const getMyResults = catchAsync(async (req, res) => {
     const result = await ResultService.getMyResults(req.user.userId);
     sendResponse(res, {
@@ -26,6 +38,10 @@ const getMyResults = catchAsync(async (req, res) => {
     });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET RESULT BY ID
+// GET /results/:id
+// ─────────────────────────────────────────────────────────────────────────────
 const getResultById = catchAsync(async (req, res) => {
     const result = await ResultService.getResultById(req.params.id);
     sendResponse(res, {
@@ -36,24 +52,63 @@ const getResultById = catchAsync(async (req, res) => {
     });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GENERATE CERTIFICATE (PDF download)
+// GET /results/:id/certificate
+// Only available when status === 'PASSED'
+// ─────────────────────────────────────────────────────────────────────────────
 const generateCertificate = catchAsync(async (req, res) => {
     const result = await ResultService.getResultById(req.params.id);
+
     if (!result) {
-        throw new AppError(httpStatus.NOT_FOUND, 'Result not found');
+        throw new AppError(httpStatus.NOT_FOUND, 'Result not found.');
     }
 
-    if (result.status !== 'pass') {
-        throw new AppError(httpStatus.BAD_REQUEST, 'Certificate only available for passing results');
+    if (result.status !== 'PASSED') {
+        throw new AppError(
+            httpStatus.BAD_REQUEST,
+            'Certificate is only available for students who have PASSED (minimum 11 correct answers).'
+        );
     }
 
     const studentName = result.userId?.fullName || 'Valued Student';
-    const pdfBuffer = await generateCertificatePDF(result, studentName);
+    const iqScore = result.iqScore;
+
+    const pdfBuffer = await generateCertificatePDF({ studentName, iqScore, result });
+
+    // Mark certificate as generated
+    await result.set({ certificateGenerated: true }).save();
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=certificate_${result._id}.pdf`);
     res.send(pdfBuffer);
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GENERATE REPORT (PDF download)
+// GET /results/:id/report
+// Only available when status === 'PASSED'
+// ─────────────────────────────────────────────────────────────────────────────
+const generateReport = catchAsync(async (req, res) => {
+    // For admin requests, skip userId check (pass null)
+    const requestingUserId = req.user.role === 'admin' ? null : req.user.userId;
+
+    const reportData = await ResultService.getResultReportData(req.params.id, requestingUserId);
+
+    const pdfBuffer = await generateReportPDF(reportData);
+
+    // Mark report as generated
+    await reportData.result.set({ reportGenerated: true }).save();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=report_${req.params.id}.pdf`);
+    res.send(pdfBuffer);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET MY CERTIFICATES
+// GET /results/my-certificates
+// ─────────────────────────────────────────────────────────────────────────────
 const getMyCertificates = catchAsync(async (req, res) => {
     const result = await ResultService.getMyCertificates(req.user.userId);
     sendResponse(res, {
@@ -64,6 +119,10 @@ const getMyCertificates = catchAsync(async (req, res) => {
     });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET ALL RESULTS (admin)
+// GET /results
+// ─────────────────────────────────────────────────────────────────────────────
 const getAllResults = catchAsync(async (req, res) => {
     const result = await ResultService.getAllResults(req.query);
     sendResponse(res, {
@@ -79,6 +138,7 @@ export const ResultController = {
     getMyResults,
     getResultById,
     generateCertificate,
+    generateReport,
     getMyCertificates,
     getAllResults
 };

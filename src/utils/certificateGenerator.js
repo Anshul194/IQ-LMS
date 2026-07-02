@@ -5,7 +5,20 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export const generateCertificatePDF = (result, studentName) => {
+/**
+ * Generates an IQ Test Certificate PDF.
+ * Only called when correctAnswers >= 11 (PASSED).
+ *
+ * Populates: Student Name, IQ Score.
+ * Everything else in the template remains unchanged.
+ *
+ * @param {Object} params
+ * @param {string} params.studentName
+ * @param {number} params.iqScore
+ * @param {Object} params.result  - full result document (for completedAt, _id)
+ * @returns {Promise<Buffer>}
+ */
+export const generateCertificatePDF = ({ studentName, iqScore, result }) => {
     return new Promise((resolve, reject) => {
         try {
             const doc = new PDFDocument({
@@ -27,11 +40,7 @@ export const generateCertificatePDF = (result, studentName) => {
                 height: doc.page.height
             });
 
-            // 2. Overlay Content (Adjusted coordinates to fit typical certificate templates)
-
-            const centerX = doc.page.width / 2;
-
-            // Title
+            // 2. Overlay Content
             doc.fillColor('#1a365d')
                 .fontSize(42)
                 .font('Helvetica-Bold')
@@ -39,7 +48,6 @@ export const generateCertificatePDF = (result, studentName) => {
 
             doc.moveDown(1.5);
 
-            // Subtitle
             doc.fontSize(18)
                 .font('Helvetica')
                 .fillColor('#4a5568')
@@ -55,16 +63,15 @@ export const generateCertificatePDF = (result, studentName) => {
 
             doc.moveDown(1);
 
-            // Description
-            const examTitle = result.examId?.examType || 'Diagnostic Assessment';
+            // IQ Score description
             doc.fontSize(16)
                 .font('Helvetica')
                 .fillColor('#4a5568')
-                .text(`For achieving a score of ${result.percentage.toFixed(1)}% in the ${examTitle}`, 100, doc.y, {
-                    width: doc.page.width - 200,
-                    align: 'center',
-                    lineGap: 5
-                });
+                .text(
+                    `For achieving an IQ Score of ${Number(iqScore.toFixed(3))} in the IQ Diagnostic Assessment`,
+                    100, doc.y,
+                    { width: doc.page.width - 200, align: 'center', lineGap: 5 }
+                );
 
             doc.moveDown(2);
 
@@ -79,16 +86,13 @@ export const generateCertificatePDF = (result, studentName) => {
                 .font('Helvetica')
                 .text(new Date(result.completedAt).toLocaleDateString(), 150, footerY + 20);
 
-            // ID
+            // Verification ID
             doc.fontSize(12)
                 .font('Helvetica-Bold')
                 .text('VERIFICATION ID', doc.page.width - 250, footerY)
                 .fontSize(10)
                 .font('Helvetica')
                 .text(result._id.toString().toUpperCase(), doc.page.width - 250, footerY + 20);
-
-            // 3. Optional Seal / Signature (If template didn't have one)
-            // doc.image(sealPath, doc.page.width/2 - 40, footerY - 20, { width: 80 });
 
             doc.end();
         } catch (error) {
