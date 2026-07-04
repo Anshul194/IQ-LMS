@@ -5,6 +5,7 @@ import { ResultService } from './result.service.js';
 import AppError from '../../../utils/AppError.js';
 import { generateCertificatePDF } from '../../../utils/certificateGenerator.js';
 import { generateReportPDF } from '../../../utils/reportGenerator.js';
+import Student from '../../models/student.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SUBMIT RESULT
@@ -74,7 +75,11 @@ const generateCertificate = catchAsync(async (req, res) => {
     const studentName = result.userId?.fullName || 'Valued Student';
     const iqScore = result.iqScore;
 
-    const pdfBuffer = await generateCertificatePDF({ studentName, iqScore, result });
+    // Fetch student's grade/class
+    const studentInfo = await Student.findOne({ userId: result.userId?._id || result.userId });
+    const grade = result.examId?.className || studentInfo?.grade || 'N/A';
+
+    const pdfBuffer = await generateCertificatePDF({ studentName, iqScore, result, grade });
 
     // Mark certificate as generated
     await result.set({ certificateGenerated: true }).save();
