@@ -86,15 +86,20 @@ const submitAptitudeResult = async (userId, payload) => {
             throw new AppError(httpStatus.BAD_REQUEST, `Question ${ans.questionId} not found in DB.`);
         }
 
-        const chapterSequence = question.chapter?.sequence;
-        const chapterPair = getChapterPair(chapterSequence, config);
-        if (!chapterPair) {
-            throw new AppError(httpStatus.BAD_REQUEST, `Invalid chapter sequence ${chapterSequence} for question ${ans.questionId}.`);
-        }
-
         const selectedOptionObj = question.options[ans.selectedOption];
         if (!selectedOptionObj) {
             throw new AppError(httpStatus.BAD_REQUEST, `Invalid option ${ans.selectedOption} for question ${ans.questionId}.`);
+        }
+
+        let chapterPair;
+        if (selectedOptionObj.careerPairIndex != null) {
+            chapterPair = config.careerPairs[selectedOptionObj.careerPairIndex];
+        } else {
+            const chapterSequence = question.chapter?.sequence;
+            chapterPair = getChapterPair(chapterSequence, config);
+        }
+        if (!chapterPair) {
+            throw new AppError(httpStatus.BAD_REQUEST, `No career pair found for question ${ans.questionId}.`);
         }
 
         const traitMapping = selectedOptionObj.traitMapping || 'NONE';
