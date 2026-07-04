@@ -11,6 +11,10 @@ const optionSchema = new mongoose.Schema({
         type: String,
         enum: ['CAREER_1', 'CAREER_2', 'BOTH', 'NONE'],
         default: 'NONE'
+    },
+    careerPairIndex: {
+        type: Number,
+        default: null
     }
 }, { _id: false });
 
