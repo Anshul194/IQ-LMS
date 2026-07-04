@@ -56,6 +56,10 @@ const deleteQuestion = async (id) => {
     return result;
 };
 
+const createBatchQuestions = async (questions) => {
+    return await QuestionMaster.insertMany(questions);
+};
+
 const assignQuestions = async (fromData, toData) => {
     // 1. Fetch questions from source
     const questions = await QuestionMaster.find({
@@ -86,6 +90,7 @@ const assignQuestions = async (fromData, toData) => {
 
 export const QuestionMasterService = {
     createQuestion,
+    createBatchQuestions,
     getAllQuestions,
     getQuestionById,
     updateQuestion,

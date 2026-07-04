@@ -56,6 +56,17 @@ const deleteQuestion = catchAsync(async (req, res) => {
     });
 });
 
+const createBatchQuestions = catchAsync(async (req, res) => {
+    const { questions } = req.body;
+    const result = await QuestionMasterService.createBatchQuestions(questions);
+    sendResponse(res, {
+        statusCode: httpStatus.CREATED,
+        success: true,
+        message: `${result.length} questions created successfully`,
+        data: result,
+    });
+});
+
 const assignQuestions = catchAsync(async (req, res) => {
     const { from, to } = req.body;
     const result = await QuestionMasterService.assignQuestions(from, to);
@@ -69,6 +80,7 @@ const assignQuestions = catchAsync(async (req, res) => {
 
 export const QuestionMasterController = {
     createQuestion,
+    createBatchQuestions,
     getAllQuestions,
     getQuestionById,
     updateQuestion,

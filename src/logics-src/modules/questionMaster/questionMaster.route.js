@@ -4,6 +4,7 @@ import { QuestionMasterController } from './questionMaster.controller.js';
 const router = express.Router();
 
 router.post('/', QuestionMasterController.createQuestion);
+router.post('/batch', QuestionMasterController.createBatchQuestions);
 router.get('/', QuestionMasterController.getAllQuestions);
 router.get('/:id', QuestionMasterController.getQuestionById);
 router.patch('/:id', QuestionMasterController.updateQuestion);
