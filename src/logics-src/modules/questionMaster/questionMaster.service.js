@@ -29,7 +29,61 @@ const getAllQuestions = async (query) => {
     if (section) filter.section = section;
     if (chapter) filter.chapter = chapter;
 
-    return await QuestionMasterRepository.getAllQuestions(filter);
+    const questions = await QuestionMasterRepository.getAllQuestions(filter);
+
+    // If grade is specified, structure the response by section and chapter, and remove correct answers
+    if (grade) {
+        const sectionsMap = {};
+
+        for (const q of questions) {
+            const sectionObj = q.section;
+            const chapterObj = q.chapter;
+
+            if (!sectionObj || !chapterObj) continue;
+
+            const sectionId = sectionObj._id.toString();
+            const chapterId = chapterObj._id.toString();
+
+            if (!sectionsMap[sectionId]) {
+                sectionsMap[sectionId] = {
+                    _id: sectionObj._id,
+                    sectionName: sectionObj.sectionName,
+                    description: sectionObj.description,
+                    logo: sectionObj.logo,
+                    chapters: {}
+                };
+            }
+
+            if (!sectionsMap[sectionId].chapters[chapterId]) {
+                sectionsMap[sectionId].chapters[chapterId] = {
+                    _id: chapterObj._id,
+                    chapterName: chapterObj.chapterName,
+                    description: chapterObj.description,
+                    sequence: chapterObj.sequence,
+                    questions: []
+                };
+            }
+
+            // Convert to object to delete correctAnswer
+            const qObj = q.toObject ? q.toObject() : { ...q };
+            delete qObj.correctAnswer;
+
+            sectionsMap[sectionId].chapters[chapterId].questions.push(qObj);
+        }
+
+        // Convert maps to sorted arrays
+        const structuredData = Object.values(sectionsMap).map(sec => {
+            const chaptersArray = Object.values(sec.chapters).sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+            return {
+                ...sec,
+                chapters: chaptersArray
+            };
+        });
+
+        return structuredData;
+    }
+
+    return questions;
 };
 
 const getQuestionById = async (id) => {
